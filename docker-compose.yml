@@ -1,0 +1,34 @@
+# Runs on the Linode box. Two services: the Next.js app, and Caddy in front
+# of it handling TLS automatically for your subdomain (e.g. app.worlebury.co.uk).
+# Supabase itself stays hosted on supabase.com — this box only runs the app.
+version: "3.9"
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/OWNER/worlebury-app:latest}
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:
+  caddy_config:

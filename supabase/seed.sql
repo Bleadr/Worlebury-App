@@ -1,0 +1,35 @@
+-- ============================================================================
+-- seed.sql — Optional local/dev seed data. Safe to run repeatedly (idempotent
+-- upserts). Do NOT run against production.
+--
+-- Usage: supabase db reset   (applies migrations then this file)
+-- ============================================================================
+
+-- After creating your first user via Supabase Auth (sign up in the app, or
+-- Supabase Studio > Authentication), promote them to super admin and create
+-- the Worlebury entity by running:
+--
+--   update public.profiles set is_super_admin = true where id = '<your-user-uuid>';
+--
+--   insert into public.entities (name, slug, created_by)
+--   values ('Worlebury', 'worlebury', '<your-user-uuid>')
+--   returning id;
+--
+--   insert into public.entity_members (entity_id, user_id, role)
+--   values ('<entity-id-above>', '<your-user-uuid>', 'owner');
+--
+--   insert into public.crm_pipelines (entity_id, name, is_default)
+--   values ('<entity-id-above>', 'Sales Pipeline', true)
+--   returning id;
+--
+--   insert into public.crm_pipeline_stages (pipeline_id, name, position, probability, is_won, is_lost)
+--   values
+--     ('<pipeline-id-above>', 'New Lead', 1, 10, false, false),
+--     ('<pipeline-id-above>', 'Contacted', 2, 25, false, false),
+--     ('<pipeline-id-above>', 'Qualified', 3, 50, false, false),
+--     ('<pipeline-id-above>', 'Proposal Sent', 4, 75, false, false),
+--     ('<pipeline-id-above>', 'Won', 5, 100, true, false),
+--     ('<pipeline-id-above>', 'Lost', 6, 0, false, true);
+--
+-- This whole flow is also exposed in-app under Admin > Entities once you've
+-- bootstrapped your first super admin, so you only need to touch raw SQL once.

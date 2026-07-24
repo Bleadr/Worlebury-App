@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ---------------------------------------------------------------------
+     WORLEBURY BRAND PALETTE — from "Worlebury Brand Guidelines" v1.0
+     Charcoal + off-white carry the brand; bronze is a restrained accent,
+     used sparingly (buttons, active states, the odd rule/highlight — never
+     as a dominant fill). Source hexes: Charcoal #1E2124, Off-white #F7F5F1,
+     Bronze #B8863B. Everything else below is a tint/shade scale generated
+     from those three anchors so the app has enough range to work with.
+     --------------------------------------------------------------------- */
+  --brand-50:  #f4f4f4;
+  --brand-100: #e7e7e8;
+  --brand-200: #d0d1d2;
+  --brand-300: #adb0b2;
+  --brand-400: #82868a;
+  --brand-500: #5b5f63;
+  --brand-600: #43474b;
+  --brand-700: #2e3235;
+  --brand-800: #23262a;
+  --brand-900: #1e2124;   /* Charcoal — exact brand colour */
+
+  --accent: #b8863b;       /* Bronze — exact brand colour, use sparingly */
+  --accent-light: #d9b173;
+  --accent-dark: #8c6529;
+  --accent-tint: #f3e7d2;
+
+  --surface: #ffffff;
+  --surface-muted: #f7f5f1;  /* Off-white — exact brand colour */
+  --border: #e6e2da;
+  --ink: #1e2124;            /* Charcoal — exact brand colour */
+  --ink-muted: #5b5f63;
+
+  /* Spectral (serif) for the wordmark & headings, Archivo (grotesk) for UI,
+     labels & body — set via next/font in src/app/fonts.ts. Fallbacks below
+     only apply before the webfonts load. */
+  --font-sans: var(--font-archivo), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-spectral), Georgia, "Times New Roman", serif;
+}
+
+.dark {
+  --surface: #23262a;
+  --surface-muted: #1e2124;
+  --border: #3a3e42;
+  --ink: #f7f5f1;
+  --ink-muted: #adb0b2;
+}
+
+body {
+  color: var(--ink);
+  background: var(--surface-muted);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
