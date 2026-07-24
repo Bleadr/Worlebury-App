@@ -17,23 +17,23 @@ export async function signOut() {
 
 // Called from the current entity's Admin area only (RLS still enforces this
 // server-side regardless of who calls it).
-export async function createEntity(formData: FormData) {
+export async function createEntity(formData: FormData): Promise<void> {
   const supabase = createClient();
   const name = String(formData.get("name") ?? "").trim();
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  if (!name) return { error: "Name is required." };
+  if (!name) throw new Error("Name is required.");
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Not signed in." };
+  if (!user) throw new Error("Not signed in.");
 
   const { data: entity, error } = await supabase
     .from("entities")
     .insert({ name, slug, created_by: user.id })
     .select()
     .single();
-  if (error) return { error: error.message };
+  if (error) throw new Error(error.message);
 
   await supabase.from("entity_members").insert({ entity_id: entity.id, user_id: user.id, role: "owner" });
 

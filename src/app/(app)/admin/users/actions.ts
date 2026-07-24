@@ -11,23 +11,17 @@ function currentEntityId() {
   return id;
 }
 
-// Invites a new person by email. They receive a Supabase auth invite email
-// linking to /signup to set a password. No self-service sign-up exists —
-// this is the only way a new account gets created, and only an entity
-// admin/owner (or super admin) can call it (enforced again by RLS below).
-export async function inviteUser(formData: FormData) {
+export async function inviteUser(formData: FormData): Promise<void> {
   const entityId = currentEntityId();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const role = String(formData.get("role") ?? "member") as EntityRole;
-  if (!email) return { error: "Email is required." };
+  if (!email) throw new Error("Email is required.");
 
   const supabase = createClient();
   const {
     data: { user: actingUser },
   } = await supabase.auth.getUser();
 
-  // RLS on entity_members already blocks non-admins from inserting, but we
-  // check explicitly here too so we can give a clean error message.
   const { data: myRole } = await supabase
     .from("entity_members")
     .select("role")
@@ -36,7 +30,7 @@ export async function inviteUser(formData: FormData) {
     .maybeSingle();
   const { data: profile } = await supabase.from("profiles").select("is_super_admin").eq("id", actingUser?.id).single();
   if (!profile?.is_super_admin && !["owner", "admin"].includes(myRole?.role ?? "")) {
-    return { error: "Only entity admins can invite users." };
+    throw new Error("Only entity admins can invite users.");
   }
 
   const admin = createAdminClient();
@@ -44,7 +38,7 @@ export async function inviteUser(formData: FormData) {
   const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
     redirectTo: `${appUrl}/signup`,
   });
-  if (error) return { error: error.message };
+  if (error) throw new Error(error.message);
 
   await supabase.from("entity_members").insert({
     entity_id: entityId,
@@ -54,7 +48,6 @@ export async function inviteUser(formData: FormData) {
   });
 
   revalidatePath("/admin/users");
-  return { success: true };
 }
 
 export async function updateMemberRole(userId: string, role: EntityRole) {

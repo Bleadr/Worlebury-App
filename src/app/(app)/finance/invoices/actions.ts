@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
-export async function createInvoice(formData: FormData) {
+export async function createInvoice(formData: FormData): Promise<void> {
   const entityId = cookies().get("current_entity")?.value!;
   const supabase = createClient();
   const {
@@ -47,7 +47,7 @@ export async function createInvoice(formData: FormData) {
     .select()
     .single();
 
-  if (error || !invoice) return { error: error?.message ?? "Could not create invoice." };
+  if (error || !invoice) throw new Error(error?.message ?? "Could not create invoice.");
 
   if (lines.length > 0) {
     await supabase.from("finance_invoice_lines").insert(lines.map((l) => ({ ...l, invoice_id: invoice.id })));
