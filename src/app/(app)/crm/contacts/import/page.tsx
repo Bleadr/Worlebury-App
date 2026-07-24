@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/Button";
 
 const FIELDS = [
   { key: "first_name", label: "First name", required: true },
-  { key: "last_name", label: "Last name" },
-  { key: "email", label: "Email" },
-  { key: "phone", label: "Phone" },
-  { key: "notes", label: "Notes" },
+  { key: "last_name", label: "Last name", required: false },
+  { key: "email", label: "Email", required: false },
+  { key: "phone", label: "Phone", required: false },
+  { key: "notes", label: "Notes", required: false },
 ] as const;
 
 function guessColumn(headers: string[], key: string) {
