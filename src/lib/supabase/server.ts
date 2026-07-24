@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createClient as createSupabaseAdminClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/types";
 
@@ -38,8 +39,7 @@ export function createClient() {
 // Use ONLY for privileged admin actions (e.g. inviting a user, creating an entity).
 // Never import this in a Client Component or expose the key to the browser.
 export function createAdminClient() {
-  const { createClient: createSupabaseClient } = require("@supabase/supabase-js");
-  return createSupabaseClient<Database>(
+  return createSupabaseAdminClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
