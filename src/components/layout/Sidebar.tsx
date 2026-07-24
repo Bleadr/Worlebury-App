@@ -11,13 +11,14 @@ import {
   Wallet,
   Boxes,
   ShieldCheck,
+  type LucideIcon,
 } from "lucide-react";
 import type { CurrentAccess } from "@/lib/permissions";
 
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   tool: keyof CurrentAccess["permissions"] | "always";
 }
 
