@@ -1,8 +1,14 @@
+import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { createInvoice } from "../actions";
 
-export default function NewInvoicePage() {
+export default async function NewInvoicePage() {
+  const entityId = await getEntityId();
+  const supabase = createClient();
+  const { data: companies } = await supabase.from("crm_companies").select("id, name").eq("entity_id", entityId).order("name");
+
   const today = new Date().toISOString().slice(0, 10);
   return (
     <div className="max-w-2xl space-y-6">
@@ -13,6 +19,15 @@ export default function NewInvoicePage() {
           <CardBody className="grid grid-cols-2 gap-4">
             <Field label="Invoice number" name="invoice_number" defaultValue={`INV-${Date.now().toString().slice(-6)}`} />
             <Field label="Client name" name="client_name" />
+            <div>
+              <label className="mb-1 block text-sm font-medium text-ink">Account (optional)</label>
+              <select name="crm_company_id" className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+                <option value="">Not linked to an account</option>
+                {(companies ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
             <Field label="Issue date" name="issue_date" type="date" defaultValue={today} />
             <Field label="Due date" name="due_date" type="date" />
             <Field label="Currency" name="currency" defaultValue="GBP" />

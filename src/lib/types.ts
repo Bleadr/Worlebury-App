@@ -124,6 +124,32 @@ export interface Resource {
   created_at: string;
 }
 
+export type TodoStatus = "backlog" | "todo" | "in_progress" | "done";
+
+export interface TodoBoard {
+  id: string;
+  entity_id: string;
+  name: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface TodoCard {
+  id: string;
+  entity_id: string;
+  board_id: string;
+  title: string;
+  description: string | null;
+  status: TodoStatus;
+  position: number;
+  priority: "low" | "normal" | "high" | "urgent";
+  due_date: string | null;
+  assigned_to: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Minimal placeholder so `createClient<Database>()` type-checks even before
 // you generate full Supabase types. Swap for the generated Database type
 // whenever convenient — nothing else needs to change.

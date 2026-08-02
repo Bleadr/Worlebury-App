@@ -1,9 +1,9 @@
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import { PipelineBoard } from "@/components/crm/PipelineBoard";
 
 export default async function PipelinePage() {
-  const entityId = cookies().get("current_entity")?.value!;
+  const entityId = await getEntityId();
   const supabase = createClient();
 
   const { data: pipeline } = await supabase

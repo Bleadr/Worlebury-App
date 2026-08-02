@@ -1,6 +1,6 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import { getCurrentAccess } from "@/lib/permissions";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
@@ -18,33 +18,30 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq("id", user.id)
     .single();
 
-  // Entities the user belongs to (or all active entities, if super admin).
-  let entities: any[] = [];
-  if (profile?.is_super_admin) {
-    const { data } = await supabase.from("entities").select("*").eq("is_active", true).order("name");
-    entities = data ?? [];
-  } else {
-    const { data } = await supabase.from("entity_members").select("entities(*)").eq("user_id", user.id);
-    entities = (data ?? []).map((r: any) => r.entities).filter(Boolean);
-  }
+  const entityId = await getEntityId();
 
-  if (entities.length === 0) {
-    redirect("/no-access");
-  }
+  const { data: entity } = await supabase.from("entities").select("name").eq("id", entityId).single();
 
-  const cookieStore = cookies();
-  const requestedId = cookieStore.get("current_entity")?.value;
-  const currentEntity = entities.find((e: any) => e.id === requestedId) ?? entities[0];
-
-  const access = await getCurrentAccess(currentEntity.id);
+  const access = await getCurrentAccess(entityId);
   if (!access) redirect("/login");
+
+  const { count: pendingApprovals } = access.isSuperAdmin
+    ? await supabase
+        .from("finance_expenses")
+        .select("id", { count: "exact", head: true })
+        .eq("entity_id", entityId)
+        .eq("status", "pending")
+    : { count: 0 };
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar access={access} />
+      <Sidebar access={access} pendingApprovals={pendingApprovals ?? 0} />
       <div className="flex flex-1 flex-col">
-        <TopBar entities={entities as any} currentId={currentEntity.id} userName={profile?.full_name ?? user.email ?? ""} />
-        <main className="flex-1 bg-surface-muted p-6">{children}</main>
+        <TopBar
+          entityName={entity?.name ?? "Worlebury"}
+          userName={profile?.full_name ?? user.email ?? ""}
+        />
+        <main className="flex-1 bg-surface-muted p-6 print:bg-white print:p-0">{children}</main>
       </div>
     </div>
   );

@@ -1,18 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
+import { logAudit } from "@/lib/audit";
 import type { EntityRole } from "@/lib/types";
 
-function currentEntityId() {
-  const id = cookies().get("current_entity")?.value;
-  if (!id) throw new Error("No entity selected.");
-  return id;
-}
-
+// Invites a new person by email. They receive a Supabase auth invite email
+// linking to /signup to set a password. No self-service sign-up exists —
+// this is the only way a new account gets created, and only an entity
+// admin/owner (or super admin) can call it (enforced again by RLS below).
 export async function inviteUser(formData: FormData): Promise<void> {
-  const entityId = currentEntityId();
+  const entityId = await getEntityId();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const role = String(formData.get("role") ?? "member") as EntityRole;
   if (!email) throw new Error("Email is required.");
@@ -50,16 +51,20 @@ export async function inviteUser(formData: FormData): Promise<void> {
   revalidatePath("/admin/users");
 }
 
-export async function updateMemberRole(userId: string, role: EntityRole) {
-  const entityId = currentEntityId();
+export async function updateMemberRole(userId: string, role: EntityRole): Promise<void> {
+  const entityId = await getEntityId();
   const supabase = createClient();
   await supabase.from("entity_members").update({ role }).eq("entity_id", entityId).eq("user_id", userId);
+  await logAudit(entityId, "member.role_changed", { table: "entity_members", id: userId }, { role });
   revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${userId}`);
 }
 
-export async function removeMember(userId: string) {
-  const entityId = currentEntityId();
+export async function removeMember(userId: string): Promise<void> {
+  const entityId = await getEntityId();
   const supabase = createClient();
   await supabase.from("entity_members").delete().eq("entity_id", entityId).eq("user_id", userId);
+  await logAudit(entityId, "member.removed", { table: "entity_members", id: userId });
   revalidatePath("/admin/users");
+  redirect("/admin/users");
 }

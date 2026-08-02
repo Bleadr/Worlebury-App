@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 
 export async function assignResource(resourceId: string, userId: string) {
   const supabase = createClient();
@@ -24,7 +24,7 @@ export async function createResourceRecord(input: {
   storage_path?: string;
   external_url?: string;
 }) {
-  const entityId = cookies().get("current_entity")?.value!;
+  const entityId = await getEntityId();
   const supabase = createClient();
   const {
     data: { user },

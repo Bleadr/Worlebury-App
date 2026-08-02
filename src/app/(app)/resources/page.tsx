@@ -1,12 +1,12 @@
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { UploadForm } from "@/components/resources/UploadForm";
 import { assignResource } from "./actions";
 
 export default async function ResourcesPage() {
-  const entityId = cookies().get("current_entity")?.value!;
+  const entityId = await getEntityId();
   const supabase = createClient();
 
   const { data: resources } = await supabase.from("resources").select("*").eq("entity_id", entityId).order("created_at", { ascending: false });

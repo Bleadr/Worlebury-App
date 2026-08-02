@@ -1,11 +1,11 @@
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { DealsByStageChart } from "@/components/dashboard/Charts";
 
 export default async function SalesDashboardPage() {
-  const entityId = cookies().get("current_entity")?.value!;
+  const entityId = await getEntityId();
   const supabase = createClient();
 
   const { data: pipeline } = await supabase.from("crm_pipelines").select("id").eq("entity_id", entityId).eq("is_default", true).single();

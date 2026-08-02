@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Table, Th, Td } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ContactsFilter } from "@/components/crm/ContactsFilter";
+import { AddContactButton } from "@/components/crm/AddContactButton";
 
 const TYPE_TONE: Record<string, "brand" | "success" | "neutral"> = {
   lead: "neutral",
@@ -13,7 +15,7 @@ const TYPE_TONE: Record<string, "brand" | "success" | "neutral"> = {
 };
 
 export default async function ContactsPage() {
-  const entityId = cookies().get("current_entity")?.value!;
+  const entityId = await getEntityId();
   const supabase = createClient();
   const { data: contacts } = await supabase
     .from("crm_contacts")
@@ -21,6 +23,8 @@ export default async function ContactsPage() {
     .eq("entity_id", entityId)
     .order("created_at", { ascending: false })
     .limit(200);
+
+  const { data: companies } = await supabase.from("crm_companies").select("id, name").eq("entity_id", entityId).order("name");
 
   return (
     <div className="space-y-6">
@@ -31,39 +35,11 @@ export default async function ContactsPage() {
         </div>
         <div className="flex gap-2">
           <Link href="/crm/contacts/import"><Button variant="secondary">Import CSV</Button></Link>
-          <Button>Add contact</Button>
+          <AddContactButton companies={companies ?? []} />
         </div>
       </div>
 
-      <Card>
-        <CardBody className="p-0">
-          <Table>
-            <thead>
-              <tr>
-                <Th>Name</Th>
-                <Th>Type</Th>
-                <Th>Email</Th>
-                <Th>Phone</Th>
-                <Th>Source</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {(contacts ?? []).map((c) => (
-                <tr key={c.id}>
-                  <Td className="font-medium text-ink">{c.first_name} {c.last_name ?? ""}</Td>
-                  <Td><Badge tone={TYPE_TONE[c.type] ?? "neutral"}>{c.type}</Badge></Td>
-                  <Td>{c.email ?? "—"}</Td>
-                  <Td>{c.phone ?? "—"}</Td>
-                  <Td>{c.source ?? "—"}</Td>
-                </tr>
-              ))}
-              {(contacts ?? []).length === 0 && (
-                <tr><Td colSpan={5} className="text-center text-ink-muted">No contacts yet. Add one or import a CSV.</Td></tr>
-              )}
-            </tbody>
-          </Table>
-        </CardBody>
-      </Card>
+      <ContactsFilter contacts={contacts ?? []} typeTone={TYPE_TONE} />
     </div>
   );
 }

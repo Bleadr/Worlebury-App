@@ -1,17 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import type { AppTool } from "@/lib/types";
 
+// Called from a user's profile page (admin/users/[id]) to flip a single
+// view/edit/delete/manage flag for one tool. Owners/admins/super admins
+// always have full access regardless of these rows (see getCurrentAccess) —
+// this only matters for 'manager', 'member' and 'read_only' roles.
 export async function togglePermission(
   userId: string,
   tool: AppTool,
   field: "can_view" | "can_edit" | "can_delete" | "can_manage",
   value: boolean
-) {
-  const entityId = cookies().get("current_entity")?.value!;
+): Promise<void> {
+  const entityId = await getEntityId();
   const supabase = createClient();
   const {
     data: { user },
@@ -24,5 +28,6 @@ export async function togglePermission(
       { onConflict: "entity_id,user_id,tool" }
     );
 
-  revalidatePath("/admin/permissions");
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath("/admin/users");
 }

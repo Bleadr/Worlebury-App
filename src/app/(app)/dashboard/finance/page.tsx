@@ -1,11 +1,11 @@
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { StatusPieChart, DealsByStageChart } from "@/components/dashboard/Charts";
 
 export default async function FinanceDashboardPage() {
-  const entityId = cookies().get("current_entity")?.value!;
+  const entityId = await getEntityId();
   const supabase = createClient();
 
   const { data: invoices } = await supabase.from("finance_invoices").select("status, total").eq("entity_id", entityId);

@@ -1,10 +1,10 @@
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Table, Th, Td } from "@/components/ui/Table";
 
 export default async function TeamDashboardPage() {
-  const entityId = cookies().get("current_entity")?.value!;
+  const entityId = await getEntityId();
   const supabase = createClient();
 
   const { data: members } = await supabase.from("entity_members").select("user_id, role, profiles(full_name)").eq("entity_id", entityId);

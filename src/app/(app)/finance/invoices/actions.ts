@@ -1,11 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getEntityId } from "@/lib/entity";
+import { logAudit } from "@/lib/audit";
 
 export async function createInvoice(formData: FormData): Promise<void> {
-  const entityId = cookies().get("current_entity")?.value!;
+  const entityId = await getEntityId();
   const supabase = createClient();
   const {
     data: { user },
@@ -34,6 +36,7 @@ export async function createInvoice(formData: FormData): Promise<void> {
     .insert({
       entity_id: entityId,
       invoice_number: String(formData.get("invoice_number")),
+      crm_company_id: String(formData.get("crm_company_id") || "") || null,
       client_name: String(formData.get("client_name")),
       issue_date: String(formData.get("issue_date")),
       due_date: String(formData.get("due_date")) || null,
@@ -54,4 +57,33 @@ export async function createInvoice(formData: FormData): Promise<void> {
   }
 
   redirect("/finance/invoices");
+}
+
+export async function deleteInvoice(invoiceId: string): Promise<void> {
+  const entityId = await getEntityId();
+  const supabase = createClient();
+  const { data: invoice } = await supabase.from("finance_invoices").select("invoice_number").eq("id", invoiceId).maybeSingle();
+  await supabase.from("finance_invoices").delete().eq("id", invoiceId);
+  await logAudit(entityId, "invoice.deleted", { table: "finance_invoices", id: invoiceId }, { invoice_number: invoice?.invoice_number });
+  revalidatePath("/finance/invoices");
+  redirect("/finance/invoices");
+}
+
+export async function updateInvoiceStatus(invoiceId: string, status: string): Promise<void> {
+  const supabase = createClient();
+  await supabase
+    .from("finance_invoices")
+    .update({ status, paid_at: status === "paid" ? new Date().toISOString() : null })
+    .eq("id", invoiceId);
+  revalidatePath("/finance/invoices");
+  revalidatePath(`/finance/invoices/${invoiceId}`);
+}
+
+export async function updateInvoiceAccount(invoiceId: string, crmCompanyId: string): Promise<void> {
+  const supabase = createClient();
+  await supabase
+    .from("finance_invoices")
+    .update({ crm_company_id: crmCompanyId || null })
+    .eq("id", invoiceId);
+  revalidatePath(`/finance/invoices/${invoiceId}`);
 }
